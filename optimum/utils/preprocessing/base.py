@@ -79,7 +79,7 @@ class DatasetProcessing:
         """
         raise NotImplementedError()
 
-    def get_metrics(predictions, references, metric):
+    def get_metrics(self, references, metric):
         """Compute a metric given pre-formatted predictions and references.
 
         Args:

@@ -22,8 +22,7 @@ class DummyModel(OptimizedModel):
     @classmethod
     def _from_pretrained(cls, **kwargs):
         config = PretrainedConfig.from_dict(kwargs["config"])
-        model = cls(model=torch.nn.Module, config=config)
-        return model
+        return cls(model=torch.nn.Module, config=config)
 
     def forward(self, *args, **kwargs):
         pass
@@ -54,6 +53,7 @@ class TestOptimizedModel(unittest.TestCase):
                 repository_id="unit_test_save_model",
             )
             # folder contains all config files and pytorch_model.bin
-            url = f"https://huggingface.co/philschmid/unit_test_save_model/raw/main/config.json"
+            url = "https://huggingface.co/philschmid/unit_test_save_model/raw/main/config.json"
+
             response = r.get(url)
             self.assertEqual(remote_hash, response.json()["from_local"])

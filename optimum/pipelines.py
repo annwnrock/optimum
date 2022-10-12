@@ -129,19 +129,8 @@ def pipeline(
         raise ValueError(f"Accelerator {accelerator} is not supported. Supported accelerators are ort")
 
     # copied from transformers.pipelines.__init__.py l.609
-    if targeted_task in NO_TOKENIZER_TASKS:
-        # These will never require a tokenizer.
-        # the model on the other hand might have a tokenizer, but
-        # the files could be missing from the hub, instead of failing
-        # on such repos, we just force to not load it.
-        load_tokenizer = False
-    else:
-        load_tokenizer = True
-    if targeted_task in NO_FEATURE_EXTRACTOR_TASKS:
-        load_feature_extractor = False
-    else:
-        load_feature_extractor = True
-
+    load_tokenizer = targeted_task not in NO_TOKENIZER_TASKS
+    load_feature_extractor = targeted_task not in NO_FEATURE_EXTRACTOR_TASKS
     if model is None:
         model_id = SUPPORTED_TASKS[targeted_task]["default"]
         model = SUPPORTED_TASKS[targeted_task]["class"][0].from_pretrained(model_id, from_transformers=True)

@@ -146,9 +146,7 @@ class OptimizedModel(ABC):
                         path_or_fileobj=os.path.join(os.getcwd(), local_file_path),
                         path_in_repo=hub_file_path,
                     )
-                except KeyError:
-                    pass
-                except NameError:
+                except (KeyError, NameError):
                     pass
 
     def git_config_username_and_email(self, git_user: str = None, git_email: str = None):
@@ -226,7 +224,7 @@ class OptimizedModel(ABC):
         if config_file is not None:
             with open(config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
-            model_kwargs.update({"config": config})
+            model_kwargs["config"] = config
 
         if from_transformers:
             return cls._from_transformers(

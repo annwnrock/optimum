@@ -39,10 +39,10 @@ def _is_gpu_available():
     checks if a gpu is available.
     """
     available_providers = ort.get_available_providers()
-    if "CUDAExecutionProvider" in available_providers and torch.cuda.is_available():
-        return True
-    else:
-        return False
+    return bool(
+        "CUDAExecutionProvider" in available_providers
+        and torch.cuda.is_available()
+    )
 
 
 class ORTConfigManager:
@@ -133,10 +133,11 @@ def fix_atenops_to_gather(model_path):
             op_num = node.name.split("_")[-1]
             new_node = onnx.helper.make_node(
                 "Gather",
-                name="Gather_" + op_num,
+                name=f"Gather_{op_num}",
                 inputs=[node.input[0], node.input[1]],
                 outputs=node.output,
             )
+
 
             model.graph.node.remove(node)
             model.graph.node.insert(int(op_num), new_node)

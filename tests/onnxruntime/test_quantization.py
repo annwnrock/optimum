@@ -99,10 +99,11 @@ class ORTDynamicQuantizationTest(unittest.TestCase):
             self.assertEqual(ort_config.to_dict(), expected_ort_config.to_dict())
 
             quantized_model = onnx_load(output_dir.joinpath("model_quantized.onnx"))
-            num_quantized_matmul = 0
-            for initializer in quantized_model.graph.initializer:
-                if "MatMul" in initializer.name and "quantized" in initializer.name:
-                    num_quantized_matmul += 1
+            num_quantized_matmul = sum(
+                "MatMul" in initializer.name and "quantized" in initializer.name
+                for initializer in quantized_model.graph.initializer
+            )
+
             self.assertEqual(expected_quantized_matmuls, num_quantized_matmul)
             gc.collect()
 

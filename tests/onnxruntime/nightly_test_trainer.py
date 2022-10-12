@@ -109,10 +109,11 @@ def _get_models_to_test(model_list, task_list, excluded: Optional[List[str]] = N
     models_to_test = []
 
     for name, model_name in model_list:
-        for feature, data_metric_config in task_list.items():
-            if excluded and name in excluded:
-                continue
-            models_to_test.append((f"{name}_{feature}", model_name, feature, data_metric_config))
+        models_to_test.extend(
+            (f"{name}_{feature}", model_name, feature, data_metric_config)
+            for feature, data_metric_config in task_list.items()
+            if not excluded or name not in excluded
+        )
 
     return sorted(models_to_test)
 
@@ -211,9 +212,9 @@ def load_and_prepare_glue(model_name, data_metric_config, max_seq_length, paddin
     valid_dataset = encoded_dataset["validation"]
     test_dataset = encoded_dataset["test"].remove_columns(["label"])
 
-    max_train_samples = kwargs.get("max_train_samples", None)
-    max_valid_samples = kwargs.get("max_valid_samples", None)
-    max_test_samples = kwargs.get("max_test_samples", None)
+    max_train_samples = kwargs.get("max_train_samples")
+    max_valid_samples = kwargs.get("max_valid_samples")
+    max_test_samples = kwargs.get("max_test_samples")
 
     if max_train_samples:
         train_dataset = train_dataset.select(range(max_train_samples))
@@ -282,9 +283,9 @@ def load_and_prepare_ner(model_name, data_metric_config, max_seq_length, padding
     valid_dataset = tokenized_datasets["validation"]
     test_dataset = tokenized_datasets["test"]
 
-    max_train_samples = kwargs.get("max_train_samples", None)
-    max_valid_samples = kwargs.get("max_valid_samples", None)
-    max_test_samples = kwargs.get("max_test_samples", None)
+    max_train_samples = kwargs.get("max_train_samples")
+    max_valid_samples = kwargs.get("max_valid_samples")
+    max_test_samples = kwargs.get("max_test_samples")
 
     if max_train_samples:
         train_dataset = train_dataset.select(range(max_train_samples))
@@ -336,7 +337,7 @@ def load_and_prepare_xsum(model_name, data_metric_config, padding="max_length", 
     max_input_length = kwargs.get("max_input_length", 512)
     max_target_length = kwargs.get("max_input_length", 64)
 
-    training_args = kwargs.get("training_args", None)
+    training_args = kwargs.get("training_args")
     label_pad_token_id = tokenizer.pad_token_id
     data_collator = _get_data_collator(
         data_metric_config, tokenizer, model, training_args=training_args, label_pad_token_id=label_pad_token_id
@@ -358,9 +359,9 @@ def load_and_prepare_xsum(model_name, data_metric_config, padding="max_length", 
     valid_dataset = encoded_dataset["validation"]
     test_dataset = encoded_dataset["test"]
 
-    max_train_samples = kwargs.get("max_train_samples", None)
-    max_valid_samples = kwargs.get("max_valid_samples", None)
-    max_test_samples = kwargs.get("max_test_samples", None)
+    max_train_samples = kwargs.get("max_train_samples")
+    max_valid_samples = kwargs.get("max_valid_samples")
+    max_test_samples = kwargs.get("max_test_samples")
 
     if max_train_samples:
         train_dataset = train_dataset.select(range(max_train_samples))
@@ -682,9 +683,10 @@ class ORTTrainerIntegrationDDPTest(unittest.TestCase):
     def test_trainer_ddp_glue(self):
 
         subprocess.run(
-            f"cp examples/onnxruntime/training/text-classification/run_glue.py ./",
+            "cp examples/onnxruntime/training/text-classification/run_glue.py ./",
             shell=True,
         )
+
 
         subprocess.run(
             f"{sys.executable} -m torch.distributed.launch"

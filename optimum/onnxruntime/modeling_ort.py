@@ -110,12 +110,12 @@ class ORTModel(OptimizedModel):
     def __init__(self, model: ort.InferenceSession = None, config=None, **kwargs):
         self.model = model
         self.config = config
-        self.model_save_dir = kwargs.get("model_save_dir", None)
+        self.model_save_dir = kwargs.get("model_save_dir")
         self.latest_model_name = kwargs.get("latest_model_name", "model.onnx")
         self.providers = model.get_providers()
         self._device = get_device_for_provider(self.providers[0])
 
-        if self._device == None:
+        if self._device is None:
             logger.warning(
                 f"ORTModel outputs will be sent to CPU as the device could not be inferred from the execution provider {self.providers[0]}."
                 f" Use `ort_model.to()` to send the outputs to the wanted device."
@@ -1074,18 +1074,14 @@ class ORTModelForCustomTasks(ORTModel):
 
     def _prepare_onnx_inputs(self, **kwargs):
         model_inputs = {input_key.name: idx for idx, input_key in enumerate(self.model.get_inputs())}
-        onnx_inputs = {}
-        # converts pytorch inputs into numpy inputs for onnx
-        for input in model_inputs.keys():
-            onnx_inputs[input] = kwargs.pop(input).cpu().detach().numpy()
-
-        return onnx_inputs
+        return {
+            input: kwargs.pop(input).cpu().detach().numpy()
+            for input in model_inputs
+        }
 
     def _prepare_onnx_outputs(self, onnx_outputs):
         model_outputs = {output_key.name: idx for idx, output_key in enumerate(self.model.get_outputs())}
-        outputs = {}
-        # converts onnxruntime outputs into tensor for standard outputs
-        for output, idx in model_outputs.items():
-            outputs[output] = torch.from_numpy(onnx_outputs[idx]).to(self.device)
-
-        return outputs
+        return {
+            output: torch.from_numpy(onnx_outputs[idx]).to(self.device)
+            for output, idx in model_outputs.items()
+        }

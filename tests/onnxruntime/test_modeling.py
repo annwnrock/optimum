@@ -782,7 +782,13 @@ class ORTModelForMultipleChoiceIntegrationTest(unittest.TestCase):
         num_choices = 4
         first_sentence = ["The sky is blue due to the shorter wavelength of blue light."] * num_choices
         start = "The color of the sky is"
-        second_sentence = [start + "blue", start + "green", start + "red", start + "yellow"]
+        second_sentence = [
+            f"{start}blue",
+            f"{start}green",
+            f"{start}red",
+            f"{start}yellow",
+        ]
+
         inputs = tokenizer(first_sentence, second_sentence, truncation=True, padding=True)
 
         # Unflatten the tokenized inputs values expanding it to the shape [batch_size, num_choices, seq_length]

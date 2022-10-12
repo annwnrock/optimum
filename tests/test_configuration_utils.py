@@ -77,7 +77,7 @@ class ConfigPushToHubTester(unittest.TestCase):
 
             new_config = FakeConfig.from_pretrained(f"{USER}/optimum-test-base-config")
             for k, v in config.to_dict().items():
-                if k != "optimum_version" and k != "transformers_version":
+                if k not in ["optimum_version", "transformers_version"]:
                     self.assertEqual(v, getattr(new_config, k))
 
     def test_push_to_hub_in_organization(self):
@@ -93,5 +93,5 @@ class ConfigPushToHubTester(unittest.TestCase):
 
             new_config = FakeConfig.from_pretrained("valid_org/optimum-test-base-config-org")
             for k, v in config.to_dict().items():
-                if k != "optimum_version" and k != "transformers_version":
+                if k not in ["optimum_version", "transformers_version"]:
                     self.assertEqual(v, getattr(new_config, k))

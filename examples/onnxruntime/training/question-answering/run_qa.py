@@ -204,16 +204,15 @@ class DataTrainingArguments:
             and self.test_file is None
         ):
             raise ValueError("Need either a dataset name or a training/validation file/test_file.")
-        else:
-            if self.train_file is not None:
-                extension = self.train_file.split(".")[-1]
-                assert extension in ["csv", "json"], "`train_file` should be a csv or a json file."
-            if self.validation_file is not None:
-                extension = self.validation_file.split(".")[-1]
-                assert extension in ["csv", "json"], "`validation_file` should be a csv or a json file."
-            if self.test_file is not None:
-                extension = self.test_file.split(".")[-1]
-                assert extension in ["csv", "json"], "`test_file` should be a csv or a json file."
+        if self.train_file is not None:
+            extension = self.train_file.split(".")[-1]
+            assert extension in ["csv", "json"], "`train_file` should be a csv or a json file."
+        if self.validation_file is not None:
+            extension = self.validation_file.split(".")[-1]
+            assert extension in ["csv", "json"], "`validation_file` should be a csv or a json file."
+        if self.test_file is not None:
+            extension = self.test_file.split(".")[-1]
+            assert extension in ["csv", "json"], "`test_file` should be a csv or a json file."
 
 
 @dataclass
@@ -263,9 +262,12 @@ def main():
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        (
+            f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
+            + f"distributed training: {training_args.local_rank != -1}, 16-bits training: {training_args.fp16}"
+        )
     )
+
     logger.info(f"Training/evaluation parameters {training_args}")
 
     # Detecting last checkpoint.
@@ -330,26 +332,29 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        model_args.config_name or model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
+
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        model_args.tokenizer_name or model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
         use_fast=True,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
+
     model = AutoModelForQuestionAnswering.from_pretrained(
         model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        from_tf=".ckpt" in model_args.model_name_or_path,
         config=config,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
+
 
     # Tokenizer check: this script requires a fast tokenizer.
     if not isinstance(tokenizer, PreTrainedTokenizerFast):
@@ -444,7 +449,10 @@ def main():
                     token_end_index -= 1
 
                 # Detect if the answer is out of the span (in which case this feature is labeled with the CLS index).
-                if not (offsets[token_start_index][0] <= start_char and offsets[token_end_index][1] >= end_char):
+                if (
+                    offsets[token_start_index][0] > start_char
+                    or offsets[token_end_index][1] < end_char
+                ):
                     tokenized_examples["start_positions"].append(cls_index)
                     tokenized_examples["end_positions"].append(cls_index)
                 else:

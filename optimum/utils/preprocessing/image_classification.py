@@ -91,7 +91,7 @@ class ImageClassificationProcessing(DatasetProcessing):
 
         task_evaluator = evaluator("image-classification")
 
-        results = task_evaluator.compute(
+        return task_evaluator.compute(
             model_or_pipeline=pipeline,
             data=eval_dataset,
             metric=all_metrics,
@@ -99,8 +99,6 @@ class ImageClassificationProcessing(DatasetProcessing):
             label_column=self.ref_keys[0],
             label_mapping=self.config.label2id,
         )
-
-        return results
 
     def get_metrics(self, predictions: List, references: List, metric: Metric):
         metrics_res = metric.compute(predictions=predictions, references=references)

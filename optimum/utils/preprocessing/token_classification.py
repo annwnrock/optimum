@@ -85,7 +85,7 @@ class TokenClassificationProcessing(DatasetProcessing):
 
         task_evaluator = evaluator("token-classification")
 
-        results = task_evaluator.compute(
+        return task_evaluator.compute(
             model_or_pipeline=pipeline,
             data=eval_dataset,
             metric=all_metrics,
@@ -94,10 +94,7 @@ class TokenClassificationProcessing(DatasetProcessing):
             join_by=" ",
         )
 
-        return results
-
     def get_pipeline_kwargs(self):
-        res = {
+        return {
             "ignore_labels": [],  # do not ignore "O"
         }
-        return res

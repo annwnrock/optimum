@@ -166,7 +166,7 @@ class ORTModelForConditionalGeneration(ORTModel):
         **kwargs
     ):
         self.config = config
-        self.model_save_dir = kwargs.get("model_save_dir", None)
+        self.model_save_dir = kwargs.get("model_save_dir")
 
         self.providers = encoder_session.get_providers()
         self._device = get_device_for_provider(encoder_session.get_providers()[0])
@@ -355,7 +355,6 @@ class ORTModelForConditionalGeneration(ORTModel):
             kwargs["last_encoder_name"] = encoder_file_name
             kwargs["last_decoder_name"] = decoder_file_name
             kwargs["last_decoder_with_past_name"] = decoder_with_past_file_name
-        # Load model from hub
         else:
             default_file_names = [ONNX_ENCODER_NAME, ONNX_DECODER_NAME]
             model_file_names = [encoder_file_name, decoder_file_name]
@@ -376,7 +375,7 @@ class ORTModelForConditionalGeneration(ORTModel):
                 kwargs[f"last_{default_file_name.split('.')[0]}_name"] = Path(model_cache_path).name
             kwargs["model_save_dir"] = Path(model_cache_path).parent
 
-            last_decoder_with_past_name = kwargs.get("last_decoder_with_past_model_name", None)
+            last_decoder_with_past_name = kwargs.get("last_decoder_with_past_model_name")
             if last_decoder_with_past_name is not None:
                 last_decoder_with_past_name = kwargs["model_save_dir"].joinpath(last_decoder_with_past_name)
             model = cls.load_model(
