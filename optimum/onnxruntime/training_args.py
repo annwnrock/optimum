@@ -70,7 +70,7 @@ class ORTTrainingArguments(TrainingArguments):
         # Handle --use_env option in torch.distributed.launch (local_rank not passed as an arg then).
         # This needs to happen before any call to self.device or self.n_gpu.
         env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
-        if env_local_rank != -1 and env_local_rank != self.local_rank:
+        if env_local_rank not in [-1, self.local_rank]:
             self.local_rank = env_local_rank
 
         # expand paths, if not os.makedirs("~/bar") will make directory
@@ -106,15 +106,14 @@ class ORTTrainingArguments(TrainingArguments):
 
         # eval_steps has to be defined and non-zero, fallbacks to logging_steps if the latter is non-zero
         if self.evaluation_strategy == IntervalStrategy.STEPS and (self.eval_steps is None or self.eval_steps == 0):
-            if self.logging_steps > 0:
-                logger.info(f"using `logging_steps` to initialize `eval_steps` to {self.logging_steps}")
-                self.eval_steps = self.logging_steps
-            else:
+            if self.logging_steps <= 0:
                 raise ValueError(
                     f"evaluation strategy {self.evaluation_strategy} requires either non-zero --eval_steps or"
                     " --logging_steps"
                 )
 
+            logger.info(f"using `logging_steps` to initialize `eval_steps` to {self.logging_steps}")
+            self.eval_steps = self.logging_steps
         # logging_steps must be non-zero for logging_strategy that is other than 'no'
         if self.logging_strategy == IntervalStrategy.STEPS and self.logging_steps == 0:
             raise ValueError(f"logging strategy {self.logging_strategy} requires non-zero --logging_steps")
@@ -161,7 +160,7 @@ class ORTTrainingArguments(TrainingArguments):
                     " `--half_precision_backend apex`: GPU bf16 is not supported by apex. Use"
                     " `--half_precision_backend cuda_amp` instead"
                 )
-            if not (self.sharded_ddp == "" or not self.sharded_ddp):
+            if self.sharded_ddp != "" and self.sharded_ddp:
                 raise ValueError("sharded_ddp is not supported with bf16")
 
         try:
@@ -178,9 +177,9 @@ class ORTTrainingArguments(TrainingArguments):
 
         if (
             is_torch_available()
-            and (self.device.type != "cuda")
-            and not (self.device.type == "xla" and "GPU_NUM_DEVICES" in os.environ)
-            and (self.fp16 or self.fp16_full_eval)
+            and self.device.type != "cuda"
+            and (self.device.type != "xla" or "GPU_NUM_DEVICES" not in os.environ)
+            and ((self.fp16 or self.fp16_full_eval))
         ):
             raise ValueError(
                 "FP16 Mixed precision training with AMP or APEX (`--fp16`) and FP16 half precision evaluation"
@@ -189,10 +188,10 @@ class ORTTrainingArguments(TrainingArguments):
 
         if (
             is_torch_available()
-            and (self.device.type != "cuda")
-            and not (self.device.type == "xla" and "GPU_NUM_DEVICES" in os.environ)
-            and (self.device.type != "cpu")
-            and (self.bf16 or self.bf16_full_eval)
+            and self.device.type != "cuda"
+            and (self.device.type != "xla" or "GPU_NUM_DEVICES" not in os.environ)
+            and self.device.type != "cpu"
+            and ((self.bf16 or self.bf16_full_eval))
         ):
             raise ValueError(
                 "BF16 Mixed precision training with AMP (`--bf16`) and BF16 half precision evaluation"
@@ -205,11 +204,8 @@ class ORTTrainingArguments(TrainingArguments):
                     torch.backends.cuda.matmul.allow_tf32 = True
                 else:
                     raise ValueError("--tf32 requires Ampere or a newer GPU arch, cuda>=11 and torch>=1.7")
-            else:
-                if is_torch_tf32_available():
-                    torch.backends.cuda.matmul.allow_tf32 = False
-                # no need to assert on else
-
+            elif is_torch_tf32_available():
+                torch.backends.cuda.matmul.allow_tf32 = False
         if self.report_to is None:
             logger.info(
                 "The default value for the training argument `--report_to` will change in v5 (from all installed "
@@ -217,12 +213,12 @@ class ORTTrainingArguments(TrainingArguments):
                 "now. You should start updating your code and make this info disappear :-)."
             )
             self.report_to = "all"
-        if self.report_to == "all" or self.report_to == ["all"]:
+        if self.report_to in ["all", ["all"]]:
             # Import at runtime to avoid a circular import.
             from transformers.integrations import get_available_reporting_integrations
 
             self.report_to = get_available_reporting_integrations()
-        elif self.report_to == "none" or self.report_to == ["none"]:
+        elif self.report_to in ["none", ["none"]]:
             self.report_to = []
         elif not isinstance(self.report_to, list):
             self.report_to = [self.report_to]

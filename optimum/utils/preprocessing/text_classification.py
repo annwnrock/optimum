@@ -75,7 +75,7 @@ class TextClassificationProcessing(DatasetProcessing):
 
         task_evaluator = evaluator("text-classification")
 
-        results = task_evaluator.compute(
+        return task_evaluator.compute(
             model_or_pipeline=pipeline,
             data=eval_dataset,
             metric=all_metrics,
@@ -83,8 +83,6 @@ class TextClassificationProcessing(DatasetProcessing):
             label_column=self.ref_keys[0],
             label_mapping=self.config.label2id,
         )
-
-        return results
 
     def get_pipeline_kwargs(self):
         return {}

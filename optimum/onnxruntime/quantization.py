@@ -70,7 +70,7 @@ class ORTCalibrationDataReader(CalibrationDataReader):
         except StopIteration:
             pass
         finally:
-            if featurized_samples is not None and len(featurized_samples) > 0:
+            if featurized_samples is not None and featurized_samples:
                 return featurized_samples
             else:
                 return None

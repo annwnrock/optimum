@@ -17,9 +17,12 @@ class TestParity(unittest.TestCase):
         self.dir_path = tempfile.mkdtemp("test_transformers_optimum_examples_parity")
 
         transformers_version = transformers.__version__
-        branch = ""
-        if not transformers_version.endswith(".dev0"):
-            branch = f"--branch v{transformers_version}"
+        branch = (
+            ""
+            if transformers_version.endswith(".dev0")
+            else f"--branch v{transformers_version}"
+        )
+
         subprocess.run(
             f"git clone --depth 3 --filter=blob:none --sparse {branch} https://github.com/huggingface/transformers",
             shell=True,

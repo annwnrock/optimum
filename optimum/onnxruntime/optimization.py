@@ -82,9 +82,10 @@ class ORTOptimizer:
             if CONFIG_NAME not in os.listdir(model_or_path):
                 raise ValueError(f"The local directory does not contain the configuration file {CONFIG_NAME}.")
             config = AutoConfig.from_pretrained(model_or_path)
-            onnx_model_path = []
-            for file_name in file_names:
-                onnx_model_path.append(model_or_path.joinpath(file_name))
+            onnx_model_path = [
+                model_or_path.joinpath(file_name) for file_name in file_names
+            ]
+
             return cls(onnx_model_path, config=config)
         else:
             raise ValueError(f"Unable to load the model from {model_or_path}.")

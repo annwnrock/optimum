@@ -247,14 +247,11 @@ class Run(_RunDefaults, _RunBase):
             assert self.task_args != None, message
             assert self.task_args["is_regression"] != None, message
 
-        # validate `dataset`
         if self.quantization_approach == "static":
             assert self.dataset[
                 "calibration_split"
             ], "Calibration split should be passed for static quantization in the dataset.calibration_split key."
 
-        # validate `calibration`
-        if self.quantization_approach == "static":
             assert (
                 self.calibration
             ), "Calibration parameters should be passed for static quantization in the calibration key."

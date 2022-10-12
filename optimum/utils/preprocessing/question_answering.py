@@ -84,14 +84,10 @@ class QuestionAnsweringProcessing(DatasetProcessing):
         return datasets_dict
 
     def run_evaluation(self, eval_dataset: Dataset, pipeline: QuestionAnsweringPipeline, metrics: List[str]):
-        if len(metrics) == 1:
-            all_metrics = load(metrics[0])
-        else:
-            all_metrics = combine(metrics)
-
+        all_metrics = load(metrics[0]) if len(metrics) == 1 else combine(metrics)
         task_evaluator = evaluator("question-answering")
 
-        results = task_evaluator.compute(
+        return task_evaluator.compute(
             model_or_pipeline=pipeline,
             data=eval_dataset,
             metric=all_metrics,
@@ -99,8 +95,6 @@ class QuestionAnsweringProcessing(DatasetProcessing):
             context_column=self.data_keys["context"],
             label_column=self.ref_keys[0],
         )
-
-        return results
 
     def get_pipeline_kwargs(self):
         return {"max_answer_len": 30, "padding": "max_length"}
